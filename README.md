@@ -67,6 +67,10 @@ public_cloud_kube_nodepool_info
 public_cloud_sshkey
 public_cloud_user_info
 public_cloud_user_s3credentials_info
+public_cloud_valkey
+public_cloud_valkey_info
+public_cloud_valkey_user
+public_cloud_valkey_user_info
 public_cloud_user_s3credentials
 public_cloud_user
 public_cloud_users_info

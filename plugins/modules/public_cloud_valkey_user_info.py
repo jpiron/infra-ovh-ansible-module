@@ -1,75 +1,81 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function)
+from ansible.module_utils.basic import AnsibleModule
+from ansible_collections.synthesio.ovh.plugins.module_utils.ovh import OVH, ovh_argument_spec
+
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.synthesio.ovh.plugins.module_utils.ovh import (
-    OVH,
-    ovh_argument_spec,
-)
-
-DOCUMENTATION = """
+DOCUMENTATION = '''
 ---
 module: public_cloud_valkey_user_info
-short_description: Retrieve Valkey users from an OVH Public Cloud database
+short_description: Get details of users on an OVHcloud Managed Valkey cluster
 description:
-  - Retrieve the list of Valkey user IDs attached to a database cluster.
-author:
-  - Synthesio SRE Team
+  - Fetch the properties of all users on a Managed Valkey cluster.
 requirements:
-  - ovh >= 0.5.0
+  - python-ovh >= 0.5.0
 options:
   service_name:
-    type: str
+    description: Public cloud project ID.
     required: true
-    description: OVH Public Cloud project ID
+    type: str
   cluster_id:
-    type: str
+    description: Valkey cluster ID (UUID).
     required: true
-    description: Valkey database cluster ID
-"""
+    type: str
+author:
+  - Synthesio SRE Team
+'''
 
-RETURN = """
+EXAMPLES = r'''
+- name: Get all users on a Valkey cluster
+  synthesio.ovh.public_cloud_valkey_user_info:
+    service_name: "{{ project_id }}"
+    cluster_id: "{{ cluster_id }}"
+  register: users_info
+'''
+
+RETURN = '''
 users:
-  description: List of Valkey user IDs
+  description: List of user properties.
   returned: success
   type: list
-  elements: str
-"""
+  elements: dict
+'''
+
 
 def run_module():
     module_args = ovh_argument_spec()
-    module_args.update(
-        dict(
-            service_name=dict(type="str", required=True),
-            cluster_id=dict(type="str", required=True),
-        )
-    )
+    module_args.update(dict(
+        service_name=dict(required=True, type="str"),
+        cluster_id=dict(required=True, type="str"),
+    ))
 
     module = AnsibleModule(
         argument_spec=module_args,
         supports_check_mode=True,
     )
-
     client = OVH(module)
 
     service_name = module.params["service_name"]
     cluster_id = module.params["cluster_id"]
 
-    users = client.wrap_call(
+    user_ids = client.wrap_call(
         "GET",
-        f"/cloud/project/{service_name}/database/valkey/{cluster_id}/user"
+        f"/cloud/project/{service_name}/database/valkey/{cluster_id}/user",
     )
+    users = [
+        client.wrap_call("GET", f"/cloud/project/{service_name}/database/valkey/{cluster_id}/user/{uid}")
+        for uid in user_ids
+    ]
 
-    module.exit_json(
-        changed=False,
-        users=users,
-    )
+    module.exit_json(changed=False, users=users)
+
 
 def main():
     run_module()
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     main()
